@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">GestorTareas</string>
+    <string name="action_about">Acerca de</string>
+    <string name="about_title">Acerca de Gestor de Tareas</string>
+    <string name="about_message">Aplicación desarrollada para la asignatura Programación Dirigida por Eventos. Requisitos Mínimos: 3 Activities, Bases de Datos, y menú/diálogo Acerca de.</string>
+    <string name="ok_button">OK</string>
 </resources>

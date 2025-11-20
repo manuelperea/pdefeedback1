@@ -1,5 +1,6 @@
 package com.example.gestortareas;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -69,6 +70,50 @@ public class TaskDbHelper extends SQLiteOpenHelper {
         );
 
         return cursor;
+    }
+
+    // Actualiza el título y descripción de una tarea existente.
+    public int updateTask(long taskId, String newTitle, String newDescription) {
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        ContentValues values = new ContentValues();
+        values.put(TaskEntry.COLUMN_NAME_TITLE, newTitle);
+        values.put(TaskEntry.COLUMN_NAME_DESCRIPTION, newDescription);
+
+        // Cláusula WHERE para seleccionar la tarea por su ID
+        String selection = TaskEntry._ID + " = ?";
+        String[] selectionArgs = { String.valueOf(taskId) };
+
+        // Ejecuta la actualización y devuelve el número de filas afectadas
+        int count = db.update(
+                TaskEntry.TABLE_NAME,
+                values,
+                selection,
+                selectionArgs);
+
+        db.close();
+        return count;
+    }
+
+
+     // Metodo auxiliar para actualizar solo el estado de completado (usado por CheckBox)
+    public int updateTaskCompletion(long taskId, boolean isCompleted) {
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        ContentValues values = new ContentValues();
+        values.put(TaskEntry.COLUMN_NAME_IS_COMPLETED, isCompleted ? 1 : 0);
+
+        String selection = TaskEntry._ID + " = ?";
+        String[] selectionArgs = { String.valueOf(taskId) };
+
+        int count = db.update(
+                TaskEntry.TABLE_NAME,
+                values,
+                selection,
+                selectionArgs);
+
+        db.close();
+        return count;
     }
 
 }

@@ -1,6 +1,7 @@
 package com.example.gestortareas;
 
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Paint;
 import android.view.LayoutInflater;
@@ -70,7 +71,22 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
             holder.titleText.setPaintFlags(holder.titleText.getPaintFlags() & (~Paint.STRIKE_THRU_TEXT_FLAG));
         }
 
-        // TODO: En el Paso 5, asignaremos OnClickListeners a CheckBox y ImageView.
+        // Manejar el evento de clic en el ícono de Edición (ImageView)
+        holder.editIcon.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Obtenemos el ID de la tarea que almacenamos previamente en el tag
+                long taskId = (long) holder.itemView.getTag();
+
+                // Creamos un Intent para ir a la pantalla de edición
+                Intent intent = new Intent(mContext, TaskEditActivity.class);
+
+                // Adjuntamos el ID de la tarea como un "extra" del Intent (Intent Explícito)
+                intent.putExtra("TASK_ID", taskId);
+
+                mContext.startActivity(intent); // Iniciamos la Activity
+            }
+        });
     }
 
     /**
@@ -112,4 +128,6 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
             editIcon = itemView.findViewById(R.id.task_edit_icon);
         }
     }
+
+
 }
