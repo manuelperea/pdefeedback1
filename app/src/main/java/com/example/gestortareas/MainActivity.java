@@ -54,25 +54,21 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    /**
-     * Se llama cuando la Activity vuelve a primer plano (e.g., después de guardar una tarea).
-     */
+
+    // Se llama cuando la Activity vuelve a primer plano (e.g., después de guardar una tarea).
     @Override
     protected void onResume() {
         super.onResume();
         refreshTaskList();
     }
 
-    /**
-     * Carga nuevos datos de la DB e intercambia el Cursor en el Adapter.
-     */
+    // Carga nuevos datos de la DB e intercambia el Cursor en el Adapter.
     private void refreshTaskList() {
         Cursor newCursor = dbHelper.readAllTasks();
         taskAdapter.swapCursor(newCursor);
     }
 
-    // --- MÉTODOS DEL MENÚ DE OPCIONES (Paso 2) ---
-
+    // MÉTODOS DEL MENÚ DE OPCIONES
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_main, menu); // Asegúrate de crear res/menu/menu_main.xml
@@ -88,6 +84,7 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    // ACERCA DE
     private void showAlert() {
         AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
         alertDialog.setTitle(R.string.about_title);
