@@ -1,5 +1,6 @@
 package com.example.gestortareas;
-// Asegúrate de tener todas estas importaciones
+
+// Importaciones necesarias
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -13,9 +14,11 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Toast;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+// IMPLEMENTA LA INTERFAZ DE CALLBACK DEL ADAPTER
 public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskActionListener {
 
     private TaskDbHelper dbHelper;
@@ -27,26 +30,20 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // 1. Configurar la Toolbar (ActionBar)
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        // 2. Inicializar Base de Datos y RecyclerView
-        dbHelper = new TaskDbHelper(this); // Inicializa el helper de BD
+        dbHelper = new TaskDbHelper(this);
         recyclerView = findViewById(R.id.recyclerview_tasks);
 
-        // 3. Configurar RecyclerView
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        // Inicialmente, cargamos los datos
-        // Cursor cursor = dbHelper.readAllTasks();
-        // taskAdapter = new TaskAdapter(this, cursor,);
-
+        // Inicializa el adapter, pasándole 'this' como listener
         Cursor cursor = dbHelper.readAllTasks();
         taskAdapter = new TaskAdapter(this, cursor, this);
         recyclerView.setAdapter(taskAdapter);
 
-        // 4. Configurar FAB para ir a TaskEditActivity (Creación)
+        // Configurar FAB para ir a TaskEditActivity
         FloatingActionButton fab = findViewById(R.id.fab_add_task);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -57,24 +54,37 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         });
     }
 
-
-    // Se llama cuando la Activity vuelve a primer plano (e.g., después de guardar una tarea).
     @Override
     protected void onResume() {
         super.onResume();
         refreshTaskList();
     }
 
-    // Carga nuevos datos de la DB e intercambia el Cursor en el Adapter.
     private void refreshTaskList() {
         Cursor newCursor = dbHelper.readAllTasks();
         taskAdapter.swapCursor(newCursor);
     }
 
-    // MÉTODOS DEL MENÚ DE OPCIONES
+    // --- IMPLEMENTACIÓN DE LA INTERFAZ DE EVENTOS (TaskActionListener) ---
+
+    // 1. Maneja el evento de cambio de estado del CheckBox
+    @Override
+    public void onTaskCompletionChanged(long taskId, boolean isCompleted) {
+        dbHelper.updateTaskCompletion(taskId, isCompleted);
+        refreshTaskList(); // Refresca la lista para reordenar/tachar
+    }
+
+    // 2. Maneja el evento de pulsación larga (Eliminar)
+    @Override
+    public void onTaskDeleted(long taskId) {
+        showDeleteConfirmationDialog(taskId);
+    }
+
+    // --- LÓGICA DEL MENÚ Y DIÁLOGOS ---
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_main, menu); // Asegúrate de crear res/menu/menu_main.xml
+        getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     }
 
@@ -87,28 +97,32 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
         return super.onOptionsItemSelected(item);
     }
 
-    // ACERCA DE
     private void showAlert() {
         AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
         alertDialog.setTitle(R.string.about_title);
         alertDialog.setMessage(R.string.about_message);
-
-        alertDialog.setPositiveButton(R.string.ok_button, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-            }
-        });
-
+        alertDialog.setPositiveButton(R.string.ok_button, (dialog, which) -> dialog.dismiss());
         alertDialog.show();
     }
 
-    @Override
-    public void onTaskCompletionChanged(long taskId, boolean isCompleted) {
-        // Ejecuta la lógica de negocio (actualizar la base de datos)
-        dbHelper.updateTaskCompletion(taskId, isCompleted);
+    // --- DIÁLOGO DE CONFIRMACIÓN DE ELIMINACIÓN ---
+    private void showDeleteConfirmationDialog(long taskId) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Confirmar Eliminación");
+        builder.setMessage("¿Estás seguro de que deseas eliminar esta tarea?");
 
-        // Actualiza la UI (la lista) para reflejar el cambio (reordenar y tachar)
-        refreshTaskList();
+        builder.setPositiveButton("Eliminar", (dialog, which) -> {
+            int rowsDeleted = dbHelper.deleteTask(taskId);
+
+            if (rowsDeleted > 0) {
+                Toast.makeText(MainActivity.this, "Tarea eliminada.", Toast.LENGTH_SHORT).show();
+                refreshTaskList();
+            } else {
+                Toast.makeText(MainActivity.this, "Error al eliminar.", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        builder.setNegativeButton("Cancelar", (dialog, which) -> dialog.dismiss());
+        builder.show();
     }
 }

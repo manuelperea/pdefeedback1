@@ -10,131 +10,120 @@ import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.TextView;
-
-import com.example.gestortareas.TaskContract.TaskEntry;
-
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+import com.example.gestortareas.TaskContract.TaskEntry;
 
-// Extender de RecyclerView.Adapter e implementar el ViewHolder
 public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder> {
 
-    // NUEVA INTERFAZ: Define el contrato de comunicación
+    // INTERFAZ DE CALLBACK: Define los eventos que la Activity debe escuchar
     public interface TaskActionListener {
-        void onTaskCompletionChanged(long taskId, boolean isCompleted);
+        void onTaskCompletionChanged(long taskId, boolean isCompleted); // Evento de CheckBox
+        void onTaskDeleted(long taskId); // Evento de Pulsación Larga (Eliminar)
     }
 
-    private Context mContext;
+    private final Context mContext;
     private Cursor mCursor;
     private final TaskActionListener mListener;
 
-    /**
-     * Constructor que recibe el Contexto de la Activity y el Cursor con los datos.
-     */
+    /** Constructor: ahora requiere la Activity como listener. */
     public TaskAdapter(Context context, Cursor cursor, TaskActionListener listener) {
         this.mContext = context;
         this.mCursor = cursor;
         this.mListener = listener;
     }
 
-    /**
-     * 1. Crea nuevos ViewHolders (y sus Vistas) para el RecyclerView.
-     * Llamado cuando el RecyclerView necesita un nuevo ViewHolder.
-     */
     @NonNull
     @Override
     public TaskViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        // Infla el layout del elemento individual de la lista
         View view = LayoutInflater.from(mContext).inflate(R.layout.task_list_item, parent, false);
-        return new TaskViewHolder(view);
+        // Pasa el listener al ViewHolder
+        return new TaskViewHolder(view, mListener, mContext);
     }
 
-    /**
-     * 2. Reemplaza el contenido de una vista.
-     * Llamado por el LayoutManager cuando necesita mostrar datos en una posición.
-     */
     @Override
     public void onBindViewHolder(@NonNull TaskViewHolder holder, int position) {
         if (!mCursor.moveToPosition(position)) {
-            return; // No debe suceder
+            return;
         }
 
-        // Obtener los datos del Cursor para la posición actual
         long id = mCursor.getLong(mCursor.getColumnIndexOrThrow(TaskEntry._ID));
         String title = mCursor.getString(mCursor.getColumnIndexOrThrow(TaskEntry.COLUMN_NAME_TITLE));
         int isCompleted = mCursor.getInt(mCursor.getColumnIndexOrThrow(TaskEntry.COLUMN_NAME_IS_COMPLETED));
 
-        // Asignar datos a las Vistas del ViewHolder
         holder.titleText.setText(title);
-        holder.checkBox.setChecked(isCompleted == 1);
-        holder.itemView.setTag(id); // Almacena el ID de la tarea en la vista para su posterior uso
+        holder.itemView.setTag(id);
 
-        // Lógica de interfaz de usuario para tareas completadas
+        // --- LÓGICA DE CHECKBOX (EVENTO DE USUARIO) ---
+        holder.checkBox.setOnCheckedChangeListener(null);
+        holder.checkBox.setChecked(isCompleted == 1);
+
+        holder.checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (mListener != null) {
+                // Notifica a la Activity que el estado ha cambiado
+                mListener.onTaskCompletionChanged(id, isChecked);
+            }
+        });
+
+        // --- LÓGICA DE ESTILO (Tachado) ---
         if (isCompleted == 1) {
-            // Tachar el texto (strikethrough)
             holder.titleText.setPaintFlags(holder.titleText.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
         } else {
-            // Quitar el tachado
             holder.titleText.setPaintFlags(holder.titleText.getPaintFlags() & (~Paint.STRIKE_THRU_TEXT_FLAG));
         }
 
-        // Manejar el evento de clic en el ícono de Edición (ImageView)
+        // --- LÓGICA DE CLIC EN EL ÍCONO DE EDICIÓN ---
         holder.editIcon.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // Obtenemos el ID de la tarea que almacenamos previamente en el tag
                 long taskId = (long) holder.itemView.getTag();
-
-                // Creamos un Intent para ir a la pantalla de edición
                 Intent intent = new Intent(mContext, TaskEditActivity.class);
-
-                // Adjuntamos el ID de la tarea como un "extra" del Intent (Intent Explícito)
-                intent.putExtra("TASK_ID", taskId);
-
-                mContext.startActivity(intent); // Iniciamos la Activity
+                intent.putExtra(TaskEditActivity.EXTRA_TASK_ID, taskId);
+                mContext.startActivity(intent);
             }
         });
     }
 
-    /**
-     * 3. Devuelve el número total de elementos.
-     */
     @Override
     public int getItemCount() {
         return mCursor.getCount();
     }
 
-    /**
-     * Permite intercambiar el Cursor por uno nuevo (e.g., después de añadir o completar una tarea).
-     */
     public void swapCursor(Cursor newCursor) {
         if (mCursor != null) {
             mCursor.close();
         }
         mCursor = newCursor;
         if (newCursor != null) {
-            notifyDataSetChanged(); // Notifica a la vista que los datos han cambiado
+            notifyDataSetChanged();
         }
     }
 
-    /**
-     * Clase interna: Define el patrón ViewHolder (cache de vistas).
-     * Requisito: Debe extender de RecyclerView.ViewHolder.
-     */
-    public class TaskViewHolder extends RecyclerView.ViewHolder {
-        // Declaración de las vistas
+    // Clase interna: Implementa OnLongClickListener para el evento de eliminar
+    public static class TaskViewHolder extends RecyclerView.ViewHolder implements View.OnLongClickListener {
         public final CheckBox checkBox;
         public final TextView titleText;
         public final ImageView editIcon;
+        private final TaskActionListener listener;
 
-        public TaskViewHolder(@NonNull View itemView) {
+        public TaskViewHolder(@NonNull View itemView, TaskActionListener listener, Context context) {
             super(itemView);
-            // Localización de las vistas
             checkBox = itemView.findViewById(R.id.task_checkbox);
             titleText = itemView.findViewById(R.id.task_title);
             editIcon = itemView.findViewById(R.id.task_edit_icon);
+
+            this.listener = listener;
+            itemView.setOnLongClickListener(this); // Asigna el OnLongClickListener a toda la fila
+        }
+
+        @Override
+        public boolean onLongClick(View v) {
+            long taskId = (long) v.getTag();
+            if (listener != null) {
+                listener.onTaskDeleted(taskId); // Dispara el evento de eliminación
+                return true;
+            }
+            return false;
         }
     }
-
-
 }

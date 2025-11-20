@@ -13,107 +13,99 @@ public class TaskDbHelper extends SQLiteOpenHelper {
     public static final int DATABASE_VERSION = 1;
     public static final String DATABASE_NAME = "TaskOrganizer.db";
 
-    // Sentencia SQL para la creación de la tabla.
     private static final String SQL_CREATE_ENTRIES =
             "CREATE TABLE " + TaskEntry.TABLE_NAME + " (" +
-                    TaskEntry._ID + " INTEGER PRIMARY KEY," + // Proporcionado por BaseColumns
+                    TaskEntry._ID + " INTEGER PRIMARY KEY," +
                     TaskEntry.COLUMN_NAME_TITLE + " TEXT NOT NULL," +
                     TaskEntry.COLUMN_NAME_DESCRIPTION + " TEXT," +
                     TaskEntry.COLUMN_NAME_IS_COMPLETED + " INTEGER DEFAULT 0)";
 
-    // Sentencia SQL para eliminar la tabla (en caso de actualización).
     private static final String SQL_DELETE_ENTRIES =
             "DROP TABLE IF EXISTS " + TaskEntry.TABLE_NAME;
 
-    // Constructor
     public TaskDbHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
-    // Se llama la primera vez que se accede a la base de datos.
     @Override
     public void onCreate(SQLiteDatabase db) {
         db.execSQL(SQL_CREATE_ENTRIES);
     }
 
-    // Se llama si la versión de la base de datos ha cambiado.
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        // La política más simple es descartar los datos y empezar de nuevo.
         db.execSQL(SQL_DELETE_ENTRIES);
         onCreate(db);
     }
 
-    // Consulta la BD y devuelve un Cursor con todas las tareas
+    // --- LECTURA ---
     public Cursor readAllTasks() {
-        SQLiteDatabase db = this.getReadableDatabase(); // Abre la bd en modo lectura
-
-        //  Columnas que queremos consultar
+        SQLiteDatabase db = this.getReadableDatabase();
         String[] projection = {
                 TaskEntry._ID,
                 TaskEntry.COLUMN_NAME_TITLE,
                 TaskEntry.COLUMN_NAME_IS_COMPLETED
         };
-
-        // Ordenamos por el estado completado para que salgan primero las tareas pendientes
         String sortOrder = TaskEntry.COLUMN_NAME_IS_COMPLETED + " ASC";
 
-        // Consulta SQL para mostrar la lista ordenada por estado
-        Cursor cursor = db.query(
-                TaskEntry.TABLE_NAME,
-                projection,
-                null,
-                null,
-                null,
-                null,
-                sortOrder
-        );
-
+        Cursor cursor = db.query(TaskEntry.TABLE_NAME, projection, null, null, null, null, sortOrder);
         return cursor;
     }
 
-    // Actualiza el título y descripción de una tarea existente.
+    /** LECTURA POR ID: Necesario para la función MODIFICAR. */
+    public Cursor readTaskById(long taskId) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String[] projection = {
+                TaskEntry._ID,
+                TaskEntry.COLUMN_NAME_TITLE,
+                TaskEntry.COLUMN_NAME_DESCRIPTION,
+                TaskEntry.COLUMN_NAME_IS_COMPLETED
+        };
+        String selection = TaskEntry._ID + " = ?";
+        String[] selectionArgs = { String.valueOf(taskId) };
+
+        Cursor cursor = db.query(TaskEntry.TABLE_NAME, projection, selection, selectionArgs, null, null, null);
+        return cursor;
+    }
+
+    // --- ACTUALIZACIÓN (MODIFICAR) ---
+    /** ACTUALIZAR TAREA: Necesario para la función MODIFICAR. */
     public int updateTask(long taskId, String newTitle, String newDescription) {
         SQLiteDatabase db = this.getWritableDatabase();
-
         ContentValues values = new ContentValues();
         values.put(TaskEntry.COLUMN_NAME_TITLE, newTitle);
         values.put(TaskEntry.COLUMN_NAME_DESCRIPTION, newDescription);
 
-        // Cláusula WHERE para seleccionar la tarea por su ID
         String selection = TaskEntry._ID + " = ?";
         String[] selectionArgs = { String.valueOf(taskId) };
 
-        // Ejecuta la actualización y devuelve el número de filas afectadas
-        int count = db.update(
-                TaskEntry.TABLE_NAME,
-                values,
-                selection,
-                selectionArgs);
-
+        int count = db.update(TaskEntry.TABLE_NAME, values, selection, selectionArgs);
         db.close();
         return count;
     }
 
-
-     // Metodo auxiliar para actualizar solo el estado de completado (usado por CheckBox)
+    /** ACTUALIZAR ESTADO: Necesario para el evento del CheckBox. */
     public int updateTaskCompletion(long taskId, boolean isCompleted) {
         SQLiteDatabase db = this.getWritableDatabase();
-
         ContentValues values = new ContentValues();
         values.put(TaskEntry.COLUMN_NAME_IS_COMPLETED, isCompleted ? 1 : 0);
 
         String selection = TaskEntry._ID + " = ?";
         String[] selectionArgs = { String.valueOf(taskId) };
 
-        int count = db.update(
-                TaskEntry.TABLE_NAME,
-                values,
-                selection,
-                selectionArgs);
-
+        int count = db.update(TaskEntry.TABLE_NAME, values, selection, selectionArgs);
         db.close();
         return count;
     }
 
+    // --- ELIMINACIÓN (DELETE) ---
+    /** ELIMINAR TAREA: Necesario para la función ELIMINAR. */
+    public int deleteTask(long taskId) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        String selection = TaskEntry._ID + " = ?";
+        String[] selectionArgs = { String.valueOf(taskId) };
+        int deletedRows = db.delete(TaskEntry.TABLE_NAME, selection, selectionArgs);
+        db.close();
+        return deletedRows;
+    }
 }
