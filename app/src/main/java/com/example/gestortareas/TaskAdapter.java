@@ -19,15 +19,22 @@ import androidx.recyclerview.widget.RecyclerView;
 // Extender de RecyclerView.Adapter e implementar el ViewHolder
 public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder> {
 
+    // NUEVA INTERFAZ: Define el contrato de comunicación
+    public interface TaskActionListener {
+        void onTaskCompletionChanged(long taskId, boolean isCompleted);
+    }
+
     private Context mContext;
     private Cursor mCursor;
+    private final TaskActionListener mListener;
 
     /**
      * Constructor que recibe el Contexto de la Activity y el Cursor con los datos.
      */
-    public TaskAdapter(Context context, Cursor cursor) {
+    public TaskAdapter(Context context, Cursor cursor, TaskActionListener listener) {
         this.mContext = context;
         this.mCursor = cursor;
+        this.mListener = listener;
     }
 
     /**

@@ -16,7 +16,7 @@ import android.view.View;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskActionListener {
 
     private TaskDbHelper dbHelper;
     private TaskAdapter taskAdapter;
@@ -39,8 +39,11 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         // Inicialmente, cargamos los datos
+        // Cursor cursor = dbHelper.readAllTasks();
+        // taskAdapter = new TaskAdapter(this, cursor,);
+
         Cursor cursor = dbHelper.readAllTasks();
-        taskAdapter = new TaskAdapter(this, cursor);
+        taskAdapter = new TaskAdapter(this, cursor, this);
         recyclerView.setAdapter(taskAdapter);
 
         // 4. Configurar FAB para ir a TaskEditActivity (Creación)
@@ -98,5 +101,14 @@ public class MainActivity extends AppCompatActivity {
         });
 
         alertDialog.show();
+    }
+
+    @Override
+    public void onTaskCompletionChanged(long taskId, boolean isCompleted) {
+        // Ejecuta la lógica de negocio (actualizar la base de datos)
+        dbHelper.updateTaskCompletion(taskId, isCompleted);
+
+        // Actualiza la UI (la lista) para reflejar el cambio (reordenar y tachar)
+        refreshTaskList();
     }
 }
