@@ -2,4 +2,9 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <color name="colorPrimary">#00796B</color>
+    <color name="colorPrimaryDark">#00796B</color>
+    <color name="colorAccent">#FFFFFFFF</color>
+    <color name="textColorPrimary">#FFFFFF</color>
 </resources>
