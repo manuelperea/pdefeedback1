@@ -1,6 +1,7 @@
 package com.example.gestortareas;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
@@ -40,6 +41,34 @@ public class TaskDbHelper extends SQLiteOpenHelper {
         // La política más simple es descartar los datos y empezar de nuevo.
         db.execSQL(SQL_DELETE_ENTRIES);
         onCreate(db);
+    }
+
+    // Consulta la BD y devuelve un Cursor con todas las tareas
+    public Cursor readAllTasks() {
+        SQLiteDatabase db = this.getReadableDatabase(); // Abre la bd en modo lectura
+
+        //  Columnas que queremos consultar
+        String[] projection = {
+                TaskEntry._ID,
+                TaskEntry.COLUMN_NAME_TITLE,
+                TaskEntry.COLUMN_NAME_IS_COMPLETED
+        };
+
+        // Ordenamos por el estado completado para que salgan primero las tareas pendientes
+        String sortOrder = TaskEntry.COLUMN_NAME_IS_COMPLETED + " ASC";
+
+        // Consulta SQL para mostrar la lista ordenada por estado
+        Cursor cursor = db.query(
+                TaskEntry.TABLE_NAME,
+                projection,
+                null,
+                null,
+                null,
+                null,
+                sortOrder
+        );
+
+        return cursor;
     }
 
 }
