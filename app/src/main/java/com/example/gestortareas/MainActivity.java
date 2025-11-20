@@ -40,10 +40,10 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.TaskA
 
         // Inicializa el adapter, pasándole 'this' como listener
         Cursor cursor = dbHelper.readAllTasks();
-        taskAdapter = new TaskAdapter(this, cursor, this);
+        taskAdapter = new TaskAdapter(this, cursor, this); // 'this' implementa TaskActionListener
         recyclerView.setAdapter(taskAdapter);
 
-        // Configurar FAB para ir a TaskEditActivity
+        // Configurar FAB para ir a TaskEditActivity (Creación)
         FloatingActionButton fab = findViewById(R.id.fab_add_task);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override

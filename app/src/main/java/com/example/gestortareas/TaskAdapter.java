@@ -26,7 +26,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
     private Cursor mCursor;
     private final TaskActionListener mListener;
 
-    /** Constructor: ahora requiere la Activity como listener. */
+    /** Constructor: requiere la Activity como listener. */
     public TaskAdapter(Context context, Cursor cursor, TaskActionListener listener) {
         this.mContext = context;
         this.mCursor = cursor;
@@ -37,7 +37,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
     @Override
     public TaskViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(mContext).inflate(R.layout.task_list_item, parent, false);
-        // Pasa el listener al ViewHolder
+        // Pasa el listener y el contexto al ViewHolder
         return new TaskViewHolder(view, mListener, mContext);
     }
 
@@ -55,12 +55,13 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
         holder.itemView.setTag(id);
 
         // --- LÓGICA DE CHECKBOX (EVENTO DE USUARIO) ---
+        // Se elimina el listener temporalmente para evitar que se dispare al configurar el estado
         holder.checkBox.setOnCheckedChangeListener(null);
         holder.checkBox.setChecked(isCompleted == 1);
 
+        // Se asigna el listener permanente que notifica a la Activity
         holder.checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (mListener != null) {
-                // Notifica a la Activity que el estado ha cambiado
                 mListener.onTaskCompletionChanged(id, isChecked);
             }
         });
@@ -78,6 +79,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
             public void onClick(View v) {
                 long taskId = (long) holder.itemView.getTag();
                 Intent intent = new Intent(mContext, TaskEditActivity.class);
+                // Se usa la constante de TaskEditActivity para pasar el ID
                 intent.putExtra(TaskEditActivity.EXTRA_TASK_ID, taskId);
                 mContext.startActivity(intent);
             }
@@ -99,7 +101,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
         }
     }
 
-    // Clase interna: Implementa OnLongClickListener para el evento de eliminar
+    // Clase interna: Implementa OnLongClickListener (Evento de Pulsación Larga)
     public static class TaskViewHolder extends RecyclerView.ViewHolder implements View.OnLongClickListener {
         public final CheckBox checkBox;
         public final TextView titleText;
@@ -113,7 +115,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
             editIcon = itemView.findViewById(R.id.task_edit_icon);
 
             this.listener = listener;
-            itemView.setOnLongClickListener(this); // Asigna el OnLongClickListener a toda la fila
+            itemView.setOnLongClickListener(this); // Registra el evento de pulsación larga
         }
 
         @Override
