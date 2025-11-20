@@ -34,7 +34,7 @@ public class TaskEditActivity extends AppCompatActivity {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
 
-        // Lógica para determinar si es modo CREACIÓN o EDICIÓN
+        // Lógica para modo CREACIÓN o EDICIÓN
         Intent intent = getIntent();
         if (intent != null && intent.hasExtra(EXTRA_TASK_ID)) {
             mTaskId = intent.getLongExtra(EXTRA_TASK_ID, -1);
@@ -52,7 +52,7 @@ public class TaskEditActivity extends AppCompatActivity {
         }
     }
 
-    /** Manejador de clic para el botón Guardar. */
+    /** Manejador de clic para el botón Guardar/save. (Definido en XML) */
     public void saveTask(View view) {
         String title = editTitle.getText().toString().trim();
         String description = editDescription.getText().toString().trim();
@@ -63,17 +63,18 @@ public class TaskEditActivity extends AppCompatActivity {
         }
 
         if (mTaskId == -1) {
-            insertNewTask(title, description); // Llama a insertar
+            insertNewTask(title, description);
         } else {
-            updateExistingTask(mTaskId, title, description); // Llama a actualizar
+            updateExistingTask(mTaskId, title, description);
         }
     }
 
-    // --- Lógica de Modificación (Read by ID) ---
+    // --- Lógica de Lectura y Carga de Datos (READ) ---
     private void loadTaskData(long taskId) {
         Cursor cursor = dbHelper.readTaskById(taskId);
 
         if (cursor != null && cursor.moveToFirst()) {
+            // Se usa getColumnIndex para evitar la excepción getColumnIndexOrThrow si el cursor está mal
             int titleIndex = cursor.getColumnIndex(TaskEntry.COLUMN_NAME_TITLE);
             int descIndex = cursor.getColumnIndex(TaskEntry.COLUMN_NAME_DESCRIPTION);
 
@@ -87,7 +88,7 @@ public class TaskEditActivity extends AppCompatActivity {
         }
     }
 
-    // --- Lógica de Inserción ---
+    // --- Lógica de Inserción (CREATE) ---
     private void insertNewTask(String title, String description) {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -106,7 +107,7 @@ public class TaskEditActivity extends AppCompatActivity {
         }
     }
 
-    // --- Lógica de Actualización (Update) ---
+    // --- Lógica de Actualización (UPDATE) ---
     private void updateExistingTask(long taskId, String title, String description) {
         int rowsAffected = dbHelper.updateTask(taskId, title, description);
 

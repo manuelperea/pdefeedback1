@@ -38,28 +38,21 @@ public class TaskDbHelper extends SQLiteOpenHelper {
         onCreate(db);
     }
 
-    // --- LECTURA ---
+    // --- LECTURA DE TODAS LAS TAREAS (READ ALL) ---
     public Cursor readAllTasks() {
         SQLiteDatabase db = this.getReadableDatabase();
-        String[] projection = {
-                TaskEntry._ID,
-                TaskEntry.COLUMN_NAME_TITLE,
-                TaskEntry.COLUMN_NAME_IS_COMPLETED
-        };
+        String[] projection = { TaskEntry._ID, TaskEntry.COLUMN_NAME_TITLE, TaskEntry.COLUMN_NAME_IS_COMPLETED };
         String sortOrder = TaskEntry.COLUMN_NAME_IS_COMPLETED + " ASC";
 
         Cursor cursor = db.query(TaskEntry.TABLE_NAME, projection, null, null, null, null, sortOrder);
         return cursor;
     }
 
-    /** LECTURA POR ID: Necesario para la función MODIFICAR. */
+    // --- LECTURA POR ID (READ BY ID - para la Edición) ---
     public Cursor readTaskById(long taskId) {
         SQLiteDatabase db = this.getReadableDatabase();
         String[] projection = {
-                TaskEntry._ID,
-                TaskEntry.COLUMN_NAME_TITLE,
-                TaskEntry.COLUMN_NAME_DESCRIPTION,
-                TaskEntry.COLUMN_NAME_IS_COMPLETED
+                TaskEntry._ID, TaskEntry.COLUMN_NAME_TITLE, TaskEntry.COLUMN_NAME_DESCRIPTION, TaskEntry.COLUMN_NAME_IS_COMPLETED
         };
         String selection = TaskEntry._ID + " = ?";
         String[] selectionArgs = { String.valueOf(taskId) };
@@ -68,8 +61,7 @@ public class TaskDbHelper extends SQLiteOpenHelper {
         return cursor;
     }
 
-    // --- ACTUALIZACIÓN (MODIFICAR) ---
-    /** ACTUALIZAR TAREA: Necesario para la función MODIFICAR. */
+    // --- ACTUALIZACIÓN COMPLETA (UPDATE - para la Edición) ---
     public int updateTask(long taskId, String newTitle, String newDescription) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -84,7 +76,7 @@ public class TaskDbHelper extends SQLiteOpenHelper {
         return count;
     }
 
-    /** ACTUALIZAR ESTADO: Necesario para el evento del CheckBox. */
+    // --- ACTUALIZACIÓN DE ESTADO (UPDATE - para el CheckBox) ---
     public int updateTaskCompletion(long taskId, boolean isCompleted) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -99,7 +91,6 @@ public class TaskDbHelper extends SQLiteOpenHelper {
     }
 
     // --- ELIMINACIÓN (DELETE) ---
-    /** ELIMINAR TAREA: Necesario para la función ELIMINAR. */
     public int deleteTask(long taskId) {
         SQLiteDatabase db = this.getWritableDatabase();
         String selection = TaskEntry._ID + " = ?";
